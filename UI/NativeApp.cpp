@@ -359,7 +359,7 @@ void NativeInit(int argc, const char *argv[], const char *savegame_dir, const ch
 	// Packed assets are included in app
 	g_VFS.Register("", new DirectoryReader(Path(external_dir)));
 #endif
-#if defined(ASSETS_DIR)
+#if defined(ASSETS_DIR) && !PPSSPP_PLATFORM(SWITCH)
 	g_VFS.Register("", new DirectoryReader(Path(ASSETS_DIR)));
 #endif
 #if !defined(MOBILE_DEVICE) && !defined(_WIN32) && !PPSSPP_PLATFORM(SWITCH)
@@ -372,8 +372,9 @@ void NativeInit(int argc, const char *argv[], const char *savegame_dir, const ch
 #endif
 
 #if PPSSPP_PLATFORM(SWITCH)
-	Path assetPath = Path(user_data_path) / "assets";
-	g_VFS.Register("", new DirectoryReader(assetPath));
+	g_VFS.Register("", new DirectoryReader(Path(user_data_path) / "assets"));
+	g_VFS.Register("", new DirectoryReader(Path(user_data_path)));
+	g_VFS.Register("", new DirectoryReader(Path("romfs:/")));
 #else
 	g_VFS.Register("", new DirectoryReader(Path("assets")));
 #endif

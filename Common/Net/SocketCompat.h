@@ -13,7 +13,9 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#if !PPSSPP_PLATFORM(SWITCH)
 #include <sys/mman.h>
+#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

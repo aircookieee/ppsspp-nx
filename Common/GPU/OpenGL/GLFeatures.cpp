@@ -251,7 +251,9 @@ bool CheckGLExtensions() {
 			gl_extensions.GLES3 = true;
 #ifdef USING_GLES2
 			// Try to load up the other funcs if we're not using glew.
+#if !PPSSPP_PLATFORM(SWITCH)
 			gl3stubInit();
+#endif
 #endif
 		}
 	} else {
@@ -286,7 +288,11 @@ bool CheckGLExtensions() {
 			// number of times. Make sure to check for 3.0 in the shader version too to avoid false positives, see #5584.
 			bool gl_3_0_in_string = versionStr && strstr(versionStr, "3.0") && glslVersionStr && strstr(glslVersionStr, "3.0");
 			bool gl_3_1_in_string = versionStr && strstr(versionStr, "3.1") && glslVersionStr && strstr(glslVersionStr, "3.1");  // intentionally left out .1
+#if !PPSSPP_PLATFORM(SWITCH)
 			if ((gl_3_0_in_string || gl_3_1_in_string) && gl3stubInit()) {
+#else
+			if ((gl_3_0_in_string || gl_3_1_in_string)) {
+#endif
 				gl_extensions.ver[0] = 3;
 				if (gl_3_1_in_string) {
 					gl_extensions.ver[1] = 1;
@@ -309,7 +315,11 @@ bool CheckGLExtensions() {
 		} else {
 			// Otherwise, let's trust GL_MAJOR_VERSION.  Note that Mali is intentionally not banned here.
 			if (gl_extensions.ver[0] >= 3) {
+#if !PPSSPP_PLATFORM(SWITCH)
 				gl_extensions.GLES3 = gl3stubInit();
+#else
+				gl_extensions.GLES3 = true; // Switch has GLES3 natively
+#endif
 			}
 		}
 #else
@@ -409,6 +419,17 @@ bool CheckGLExtensions() {
 		gl_extensions.EXT_depth_clamp = g_set_gl_extensions.count("GL_EXT_depth_clamp") != 0;
 		gl_extensions.EXT_disjoint_timer_query = g_set_gl_extensions.count("GL_EXT_disjoint_timer_query") != 0;
 		gl_extensions.APPLE_clip_distance = g_set_gl_extensions.count("GL_APPLE_clip_distance") != 0;
+
+#if PPSSPP_PLATFORM(SWITCH)
+		gl_extensions.EXT_buffer_storage = false;
+		gl_extensions.ARB_buffer_storage = false;
+		gl_extensions.ARB_blend_func_extended = false;
+		gl_extensions.EXT_blend_func_extended = false;
+		gl_extensions.ARB_copy_image = false;
+		gl_extensions.EXT_copy_image = false;
+		gl_extensions.NV_copy_image = false;
+		gl_extensions.OES_copy_image = false;
+#endif
 
 #if defined(__ANDROID__)
 		// On Android, incredibly, this is not consistently non-zero! It does seem to have the same value though.

@@ -9,7 +9,7 @@
 // For iOS, define function pointer types and variables locally since gl3stub.h
 // content is excluded on iOS. These will remain NULL since iOS doesn't support
 // GL_EXT_disjoint_timer_query.
-#if PPSSPP_PLATFORM(IOS)
+#if PPSSPP_PLATFORM(IOS) || PPSSPP_PLATFORM(SWITCH)
 typedef void (*PFNGLQUERYCOUNTERPROC)(GLuint id, GLenum target);
 typedef void (*PFNGLGETQUERYOBJECTUI64VPROC)(GLuint id, GLenum pname, GLuint64 *params);
 static PFNGLQUERYCOUNTERPROC glQueryCounter = nullptr;

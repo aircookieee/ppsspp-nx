@@ -9,6 +9,19 @@ Originally released under the GPL 2.0 (and later) in November 2012
 
 Official website: https://www.ppsspp.org/
 
+## Nintendo Switch Support
+This fork of PPSSPP includes a native port for the Nintendo Switch (Horizon OS), utilizing libnx and OpenGL ES 3.0.
+
+Key features of this port:
+- Full ARM64 JIT support.
+- Optimized OpenGL ES 3.0 graphics backend.
+- Integrated Virtual File System (VFS) for Switch SD card access.
+- Stability improvements for Switch-specific GPU driver requirements.
+
+For detailed technical changes, build instructions, and asset placement, please refer to [README.switch.md](README.switch.md).
+
+*Note: This Switch port was developed with the assistance of Antigravity, an AI coding assistant from Google DeepMind.*
+
 Discord: https://discord.gg/5NJB6dD
 
 No BIOS file required to play, PPSSPP is an "HLE" emulator.  Default settings balance good compatibility and speed.

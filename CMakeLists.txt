@@ -232,6 +232,54 @@ if(WEBOS)
 	set(USE_SYSTEM_ZSTD OFF)
 endif()
 
+if(USE_LIBNX)
+	message("Nintendo Switch (libnx) build enabled")
+	set(ARM64 ON)
+	set(USING_GLES2 ON)
+	set(USING_EGL OFF)
+	set(MOBILE_DEVICE ON)
+	set(VULKAN OFF)
+	set(USE_DISCORD OFF)
+	set(USE_MINIUPNPC OFF)
+	set(USE_WAYLAND_WSI OFF)
+	set(USING_X11_VULKAN OFF)
+	set(HEADLESS OFF)
+	set(UNITTEST OFF)
+	set(HTTPS_NOT_AVAILABLE ON)
+	set(USE_SYSTEM_LIBSDL2 ON)
+	set(USE_SYSTEM_LIBPNG OFF)
+	set(USE_SYSTEM_ZSTD OFF)
+	set(USE_SYSTEM_FFMPEG OFF)
+	set(USE_NO_MMAP ON)
+	set(ENABLE_PCH OFF CACHE BOOL "" FORCE)
+	add_compile_definitions(__SWITCH__ HAVE_LIBNX BreakReason=_BreakReason)
+
+	# devkitPro include paths for portlibs
+	if(DEFINED ENV{DEVKITPRO})
+		set(DEVKITPRO $ENV{DEVKITPRO})
+	elseif(EXISTS "C:/devkitPro")
+		set(DEVKITPRO "C:/devkitPro")
+	elseif(EXISTS "/opt/devkitpro")
+		set(DEVKITPRO "/opt/devkitpro")
+	endif()
+
+	include_directories(
+		${DEVKITPRO}/portlibs/switch/include
+		${DEVKITPRO}/portlibs/switch/include/SDL2
+		${DEVKITPRO}/libnx/include
+	)
+	link_directories(
+		${DEVKITPRO}/portlibs/switch/lib
+		${DEVKITPRO}/libnx/lib
+	)
+
+	# Point FFmpeg discovery to Switch portlibs
+	set(FFMPEG_DIR "${DEVKITPRO}/portlibs/switch")
+
+	# Set OpenGL libraries for Switch (mesa nouveau via portlibs)
+	set(OPENGL_LIBRARIES GLESv2 EGL glapi drm_nouveau nx)
+endif()
+
 if(UNIX AND NOT (APPLE OR ANDROID) AND VULKAN)
 	if(USING_X11_VULKAN)
 		message("Using X11 for Vulkan")
@@ -2120,7 +2168,7 @@ if(WIN32)
 	)
 endif()
 
-if(LINUX OR ANDROID OR MACOSX OR IOS OR BSD)
+if(LINUX OR ANDROID OR MACOSX OR IOS OR BSD OR USE_LIBNX)
 	list(APPEND aemu_postoffice
 		ext/aemu_postoffice/client/sock_impl_linux.c
 	)
@@ -2630,7 +2678,10 @@ else()
 endif()
 
 target_link_libraries(${CoreLibName} Common native chdr kirk cityhash sfmt19937 xbrz xxhash rcheevos minimp3 at3_standalone lua ${GlslangLibs}
-	${CoreExtraLibs} ${OPENGL_LIBRARIES} ${X11_LIBRARIES} ${CMAKE_DL_LIBS})
+	${CoreExtraLibs} ${OPENGL_LIBRARIES} ${X11_LIBRARIES})
+if(NOT USE_LIBNX)
+	target_link_libraries(${CoreLibName} ${CMAKE_DL_LIBS})
+endif()
 
 # Winsock
 if(WIN32)
@@ -2658,6 +2709,9 @@ if(FFmpeg_FOUND)
 		FFmpeg::swscale
 		${ZLIB_LIBRARY}
 	)
+	if(USE_LIBNX)
+		target_link_libraries(${CoreLibName} bz2 dav1d)
+	endif()
 endif()
 
 # Discord integration
@@ -3092,6 +3146,43 @@ if(TargetBin)
 		target_link_options(${TargetBin} PRIVATE "-Wl,-z,max-page-size=16384")
 	endif()
 	target_link_libraries(${TargetBin} ${LinkCommon} Common)
+
+	# Nintendo Switch: link libnx and package as NRO
+	if(USE_LIBNX)
+		# Link Switch-specific libraries
+		target_link_libraries(${TargetBin}
+			SDL2 SDL2main
+			EGL GLESv2 glapi drm_nouveau
+			nx
+			avcodec avformat avutil swresample swscale
+			png z m
+		)
+
+		# Create .nro homebrew file using devkitPro's platform helpers
+		if(COMMAND nx_create_nro)
+			nx_generate_nacp(ppsspp.nacp
+				NAME "PPSSPP"
+				AUTHOR "PPSSPP Team"
+				VERSION "1.18.1"
+			)
+			nx_create_nro(${TargetBin}
+				NACP ppsspp.nacp
+			)
+		else()
+			# Fallback: manual elf2nro invocation
+			find_program(ELF2NRO elf2nro HINTS "${DEVKITPRO}/tools/bin")
+			find_program(NACPTOOL nacptool HINTS "${DEVKITPRO}/tools/bin")
+			if(ELF2NRO AND NACPTOOL)
+				add_custom_command(TARGET ${TargetBin} POST_BUILD
+					COMMAND ${NACPTOOL} --create "PPSSPP" "PPSSPP Team" "1.18.1" ${CMAKE_BINARY_DIR}/ppsspp.nacp
+					COMMAND ${ELF2NRO} $<TARGET_FILE:${TargetBin}> ${CMAKE_BINARY_DIR}/${TargetBin}.nro --nacp=${CMAKE_BINARY_DIR}/ppsspp.nacp
+					COMMENT "Building Switch NRO: ${TargetBin}.nro"
+				)
+			else()
+				message(WARNING "elf2nro/nacptool not found - NRO file will not be generated")
+			endif()
+		endif()
+	endif()
 endif()
 
 # installs

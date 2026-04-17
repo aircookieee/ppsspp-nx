@@ -5,7 +5,15 @@
 #if PPSSPP_PLATFORM(IOS)
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
+#elif PPSSPP_PLATFORM(SWITCH)
+#pragma message("PPSSPP_PLATFORM_SWITCH is TRUE")
+#define GL_GLEXT_PROTOTYPES 1
+#define GL_GLES_PROTOTYPES 1
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>
 #elif defined(USING_GLES2)
+#pragma message("USING_GLES2 is TRUE")
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #define GL_BGRA_EXT 0x80E1
@@ -18,7 +26,7 @@
 #endif
 #endif
 
-#ifdef USING_GLES2
+#if defined(USING_GLES2) && !PPSSPP_PLATFORM(SWITCH)
 // Support OpenGL ES 3.0
 // This uses the "DYNAMIC" approach from the gles3jni NDK sample.
 #include "Common/GPU/OpenGL/gl3stub.h"

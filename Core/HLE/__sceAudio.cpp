@@ -89,10 +89,10 @@ static void hleHostAudioUpdate(u64 userdata, int cyclesLate) {
 }
 
 static void __AudioCPUMHzChange() {
-	audioIntervalCycles = (int)(usToCycles(1000000ULL) * hwBlockSize / hwSampleRate);
+	audioIntervalCycles = (int)(usToCycles((u64)1000000) * hwBlockSize / hwSampleRate);
 
 	// Soon to be removed.
-	audioHostIntervalCycles = (int)(usToCycles(1000000ULL) * 512 / hwSampleRate);
+	audioHostIntervalCycles = (int)(usToCycles((u64)1000000) * 512 / hwSampleRate);
 }
 
 void __AudioInit() {

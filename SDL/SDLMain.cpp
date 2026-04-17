@@ -26,7 +26,27 @@ SDLJoystick *joystick = NULL;
 #include <thread>
 #include <locale>
 
+#if !PPSSPP_PLATFORM(SWITCH)
 #include "ext/portable-file-dialogs/portable-file-dialogs.h"
+#else
+#include <string>
+#include <vector>
+namespace pfd {
+	struct settings { static bool available() { return false; } };
+	struct open_file {
+		open_file(const std::string&, const std::string&, const std::vector<std::string>&) {}
+		std::vector<std::string> result() { return {}; }
+	};
+	struct save_file {
+		save_file(const std::string&, const std::string&, const std::vector<std::string>&) {}
+		std::string result() { return ""; }
+	};
+	struct select_folder {
+		select_folder(const std::string&, const std::string&) {}
+		std::string result() { return ""; }
+	};
+}
+#endif
 
 #include "ext/imgui/imgui.h"
 #include "ext/imgui/imgui_impl_platform.h"
@@ -1431,8 +1451,21 @@ int main(int argc, char *argv[]) {
 	g_logManager.EnableOutput(LogOutput::Stdio);
 
 #ifdef HAVE_LIBNX
+#include <switch.h>
 	socketInitializeDefault();
 	nxlinkStdio();
+	Result rc = fsdevMountSdmc();
+	if (R_FAILED(rc)) {
+		fprintf(stderr, "fsdevMountSdmc failed: 0x%x\n", rc);
+	} else {
+		fprintf(stderr, "fsdevMountSdmc successful\n");
+	}
+	rc = romfsInit();
+	if (R_FAILED(rc)) {
+		fprintf(stderr, "romfsInit failed: 0x%x\n", rc);
+	} else {
+		fprintf(stderr, "romfsInit successful\n");
+	}
 #else // HAVE_LIBNX
 	// Ignore sigpipe.
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
@@ -1625,7 +1658,7 @@ int main(int argc, char *argv[]) {
 	// Mac / Linux
 	char path[2048];
 #if PPSSPP_PLATFORM(SWITCH)
-	strcpy(path, "/switch/ppsspp/");
+	strcpy(path, "sdmc:/switch/ppsspp/");
 #else
 	const char *the_path = getenv("HOME");
 	if (!the_path) {
@@ -1686,6 +1719,7 @@ int main(int argc, char *argv[]) {
 	if (g_Config.iGPUBackend == (int)GPUBackend::OPENGL) {
 		SDLGLGraphicsContext *glctx = new SDLGLGraphicsContext();
 		if (glctx->Init(window, x, y, w, h, mode, &error_message, force_gl_version) != 0) {
+#if !PPSSPP_PLATFORM(SWITCH)
 			// Let's try the fallback once per process run.
 			fprintf(stderr, "GL init error '%s' - falling back to Vulkan\n", error_message.c_str());
 			g_Config.iGPUBackend = (int)GPUBackend::VULKAN;
@@ -1699,6 +1733,10 @@ int main(int argc, char *argv[]) {
 				return 1;
 			}
 			graphicsContext = vkctx;
+#else
+			fprintf(stderr, "GL init error '%s'\n", error_message.c_str());
+			return 1;
+#endif
 		} else {
 			graphicsContext = glctx;
 		}
@@ -1930,6 +1968,11 @@ int main(int argc, char *argv[]) {
 #endif
 
 	glslang::FinalizeProcess();
+
+#ifdef HAVE_LIBNX
+	romfsExit();
+	fsdevUnmountAll();
+#endif
 	fprintf(stderr, "Leaving main\n");
 #ifdef HAVE_LIBNX
 	socketExit();

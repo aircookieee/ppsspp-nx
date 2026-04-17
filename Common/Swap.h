@@ -127,8 +127,11 @@ public:
 		return *this;
 	}
 
+	// On Switch (aarch64), long and s64/u64 are the same type, skip these operators
+#ifndef __SWITCH__
 	operator unsigned long() const { return (unsigned long)swap(); }
 	operator long() const { return (long)swap(); }	
+#endif
 	operator s8() const { return (s8)swap(); }
 	operator u8() const { return (u8)swap(); }
 	operator s16() const { return (s16)swap(); }

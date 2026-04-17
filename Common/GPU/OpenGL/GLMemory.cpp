@@ -32,7 +32,7 @@ void *GLRBuffer::Map(GLBufferStrategy strategy) {
 			if (!hasStorage_) {
 				GLbitfield storageFlags = access & ~(GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 #ifdef USING_GLES2
-#ifdef GL_EXT_buffer_storage
+#if defined(GL_EXT_buffer_storage) && !PPSSPP_PLATFORM(SWITCH)
 				glBufferStorageEXT(target_, size_, nullptr, storageFlags);
 #endif
 #else

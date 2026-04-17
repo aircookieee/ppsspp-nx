@@ -303,17 +303,17 @@ std::string StringFromFormat(const char* format, ...) {
 	}
 	va_end(args);
 #else
-	char *buf = nullptr;
-
 	va_start(args, format);
-	if (vasprintf(&buf, format, args) < 0)
-		buf = nullptr;
-	va_end(args);
-
-	if (buf != nullptr) {
-		temp = buf;
-		free(buf);
+	va_list args_copy;
+	va_copy(args_copy, args);
+	int required = vsnprintf(nullptr, 0, format, args_copy);
+	va_end(args_copy);
+	if (required >= 0) {
+		temp.resize(required + 1);
+		vsnprintf(&temp[0], required + 1, format, args);
+		temp.resize(required);
 	}
+	va_end(args);
 #endif
 	return temp;
 }

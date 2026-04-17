@@ -41,34 +41,35 @@ typedef signed __int64 s64;
 #define NO_INLINE __attribute__((noinline))
 
 #ifdef __SWITCH__
-// Other conflicts
+// Avoid name conflicts with libnx symbols
 #define Event _Event
 #define Framebuffer _Framebuffer
 #define Waitable _Waitable
 #define ThreadContext _ThreadContext
+#define BreakReason _BreakReason
 #include <switch.h>
-// Cleanup
-#undef KeyInputFlags::UP
-#undef KeyInputFlags::DOWN
+// Cleanup libnx name conflicts
 #undef Event
 #undef Framebuffer
 #undef Waitable
 #undef ThreadContext
-
-// Conflicting types with libnx
-#ifndef _u64
-#define u64 _u64
-#endif // _u64
-
-#ifndef s64
-#define s64 _s64
-#endif // _s64
+// BIT(n) macro from libnx conflicts with PPSSPP's BIT() method
+#undef BIT
+// BreakReason from libnx conflicts with PPSSPP's enum
+#undef BreakReason
 
 typedef unsigned char   u_char;
 typedef unsigned short  u_short;
 typedef unsigned int    u_int;
 typedef unsigned long   u_long;
-#endif // __SWITCH__
+
+// libnx already typedefs u8/u16/u32/u64/s8/s16/s32/s64 via switch/types.h.
+// On aarch64, libnx uses 'unsigned long' for u64 and 'signed long' for s64,
+// while PPSSPP normally uses 'unsigned long long' / 'signed long long'.
+// Both are 64-bit on LP64 but are different types in C/C++.
+// We simply reuse libnx's typedefs to avoid conflicts.
+
+#else // !__SWITCH__
 
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -79,5 +80,7 @@ typedef signed char s8;
 typedef signed short s16;
 typedef signed int s32;
 typedef signed long long s64;
+
+#endif // __SWITCH__
 
 #endif // _WIN32

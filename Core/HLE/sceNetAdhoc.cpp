@@ -3563,7 +3563,7 @@ int sceNetAdhocctlGetPeerInfo(const char *mac, int size, u32 peerInfoAddr) {
 			buf->mac_addr = *maddr;
 			buf->flags = 0x0400;
 			buf->padding = 0;
-			buf->last_recv = std::max(0LL, static_cast<s64>(CoreTiming::GetGlobalTimeUsScaled() - defaultLastRecvDelta));
+			buf->last_recv = std::max((s64)0, static_cast<s64>(CoreTiming::GetGlobalTimeUsScaled() - defaultLastRecvDelta));
 
 			// Success
 			retval = 0;
@@ -6070,7 +6070,7 @@ static int sceNetAdhocctlGetAddrByName(const char *nickName, u32 sizeAddr, u32 b
 						getLocalMac(&mac);
 						buf[discovered].mac_addr = mac;
 						buf[discovered].flags = 0x0400;
-						u64 lastrecv = std::max(0LL, static_cast<s64>(CoreTiming::GetGlobalTimeUsScaled() - defaultLastRecvDelta));
+						u64 lastrecv = std::max((s64)0, static_cast<s64>(CoreTiming::GetGlobalTimeUsScaled() - defaultLastRecvDelta));
 						buf[discovered++].last_recv = lastrecv;
 
 						DEBUG_LOG(Log::sceNet, "Peer [%s][%s][%s][%llu]", mac2str(&mac).c_str(), ip2str(addr.sin_addr).c_str(), nickName, lastrecv);
